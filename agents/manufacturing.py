@@ -1,4 +1,4 @@
-"""Manufacturing Agent for UAV design system with comprehensive conversation management."""
+"""Manufacturing Agent for UAV design system using LangGraph create_react_agent."""
 
 from typing import Dict, List, Any
 from langchain_openai import ChatOpenAI
@@ -17,10 +17,13 @@ class ManufacturingAgent(BaseAgent):
     
     def check_dependencies_ready(self, state: GlobalState) -> bool:
         """Needs output from structures agent."""
-        return state.current_iteration in state.structures_outputs
+        return len(state.structures_outputs) > 0
     
     def get_dependency_outputs(self, state: GlobalState) -> Dict[str, Any]:
-        """Get structures output."""
-        return {
-            "structures": state.structures_outputs.get(state.current_iteration)
-        }
+        """Get latest structures output."""
+        if state.structures_outputs:
+            latest_key = max(state.structures_outputs.keys())
+            return {
+                "structures": state.structures_outputs[latest_key]
+            }
+        return {}

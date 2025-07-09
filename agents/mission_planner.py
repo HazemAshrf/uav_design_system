@@ -1,4 +1,4 @@
-"""Mission Planner Agent for UAV design system with comprehensive conversation management."""
+"""Mission Planner Agent for UAV design system using LangGraph create_react_agent."""
 
 from typing import Dict, List, Any
 from langchain_openai import ChatOpenAI

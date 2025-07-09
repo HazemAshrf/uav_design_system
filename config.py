@@ -2,13 +2,15 @@
 
 import os
 from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # API Configuration
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "your-api-key-here")
+api_key = os.getenv("OPENAI_API_KEY")
 
 # Model Configuration
-MODEL_NAME = "mistralai/mistral-small-3.2-24b-instruct:free"
+MODEL_NAME = "gpt-4o-mini"
 
 # System Configuration
 MAX_ITERATIONS = 20
@@ -28,6 +30,5 @@ def get_llm() -> ChatOpenAI:
     """Get configured LLM instance."""
     return ChatOpenAI(
         model=MODEL_NAME,
-        base_url=OPENROUTER_BASE_URL,
-        api_key=OPENROUTER_API_KEY
+        api_key=api_key,
     )

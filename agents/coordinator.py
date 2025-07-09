@@ -36,9 +36,33 @@ class CoordinatorAgent:
         if current_iter == 0:
             # Initial task assignment
             output = await self._create_initial_tasks(state)
+            print(f"🎯 Coordinator created initial tasks for {len(output.agent_tasks)} agents")
         else:
-            # Evaluate and decide on continuation
-            output = await self._evaluate_and_decide(state)
+            # Check stability first - if not stable, continue without LLM evaluation
+            is_stable = self.check_stability(state)
+            
+            if not is_stable:
+                # System is not stable, continue to next iteration without LLM evaluation
+                print(f"🔄 System NOT STABLE - continuing to iteration {current_iter + 1}")
+                output = CoordinatorOutput(
+                    project_complete=False,
+                    completion_reason=f"System not stable - agents still updating. Continuing to iteration {current_iter + 1}.",
+                    agent_tasks=[],
+                    messages=[],
+                    iteration=current_iter
+                )
+            else:
+                # System is stable, evaluate with LLM
+                print(f"✅ System STABLE - evaluating completion...")
+                output = await self._evaluate_and_decide(state)
+                
+                # If LLM decides to continue, reset stability by updating last_update_iteration
+                if not output.project_complete:
+                    print(f"🔄 Coordinator decided to CONTINUE: {output.completion_reason}")
+                    # Reset stability by marking this iteration as an update
+                    state.last_update_iteration["coordinator"] = current_iter
+                else:
+                    print(f"🎉 Coordinator decided to COMPLETE: {output.completion_reason}")
         
         output.iteration = current_iter
         state.coordinator_outputs[current_iter] = output

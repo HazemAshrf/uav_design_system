@@ -1,4 +1,4 @@
-"""Structures Agent for UAV design system with comprehensive conversation management."""
+"""Structures Agent for UAV design system using LangGraph create_react_agent."""
 
 from typing import Dict, List, Any
 from langchain_openai import ChatOpenAI
@@ -17,12 +17,21 @@ class StructuresAgent(BaseAgent):
     
     def check_dependencies_ready(self, state: GlobalState) -> bool:
         """Needs MTOW from mission planner and wing geometry from aerodynamics."""
-        return (state.current_iteration in state.mission_planner_outputs and 
-                state.current_iteration in state.aerodynamics_outputs)
+        return (len(state.mission_planner_outputs) > 0 and 
+                len(state.aerodynamics_outputs) > 0)
+    
+    def _debug_dependency_status(self, state: GlobalState):
+        """Debug what dependencies are missing."""
+        print(f"     Mission planner outputs: {len(state.mission_planner_outputs)} available")
+        print(f"     Aerodynamics outputs: {len(state.aerodynamics_outputs)} available")
     
     def get_dependency_outputs(self, state: GlobalState) -> Dict[str, Any]:
-        """Get mission planner and aerodynamics outputs."""
-        return {
-            "mission_plan": state.mission_planner_outputs.get(state.current_iteration),
-            "aerodynamics": state.aerodynamics_outputs.get(state.current_iteration)
-        }
+        """Get latest mission planner and aerodynamics outputs."""
+        result = {}
+        if state.mission_planner_outputs:
+            latest_key = max(state.mission_planner_outputs.keys())
+            result["mission_plan"] = state.mission_planner_outputs[latest_key]
+        if state.aerodynamics_outputs:
+            latest_key = max(state.aerodynamics_outputs.keys())
+            result["aerodynamics"] = state.aerodynamics_outputs[latest_key]
+        return result

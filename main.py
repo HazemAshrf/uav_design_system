@@ -1,6 +1,7 @@
 """Main entry point for the UAV Design Agent Coordination System."""
 
 import asyncio
+import os
 from dotenv import load_dotenv
 
 from state import GlobalState
@@ -9,6 +10,13 @@ from helpers import print_final_design, print_iteration_summary, get_project_sta
 
 # Load environment variables
 load_dotenv()
+
+# Check if API key is loaded
+if not os.getenv("OPENROUTER_API_KEY"):
+    print("❌ Error: OPENROUTER_API_KEY not found in environment variables.")
+    print("Please check your .env file and ensure it contains:")
+    print("OPENROUTER_API_KEY=your-actual-api-key-here")
+    exit(1)
 
 
 async def run_uav_design_project(requirements: str) -> GlobalState:
@@ -19,7 +27,7 @@ async def run_uav_design_project(requirements: str) -> GlobalState:
     )
     
     workflow = create_uav_design_workflow()
-    return await workflow.ainvoke(initial_state)
+    return await workflow.ainvoke(initial_state, {"recursion_limit": 100})
 
 
 async def main():
@@ -48,7 +56,7 @@ async def main():
         final_state = await run_uav_design_project(requirements)
         
         # Print results
-        print(f"\n✅ Project completed after {final_state.current_iteration} iterations")
+        print(f"\n✅ Project completed after {final_state['current_iteration']} iterations")
         
         # Print final design
         print_final_design(final_state)
@@ -65,8 +73,8 @@ async def main():
         print(f"   Project Status: {'✅ Complete' if stats['project_complete'] else '❌ Incomplete'}")
         
         # Print completion reason if available
-        if final_state.coordinator_outputs:
-            latest_coord = final_state.coordinator_outputs[max(final_state.coordinator_outputs.keys())]
+        if final_state['coordinator_outputs']:
+            latest_coord = final_state['coordinator_outputs'][max(final_state['coordinator_outputs'].keys())]
             print(f"\n📝 Completion Reason: {latest_coord.completion_reason}")
         
     except Exception as e:
@@ -90,7 +98,7 @@ async def run_custom_project():
     try:
         final_state = await run_uav_design_project(requirements)
         
-        print(f"\n✅ Custom project completed after {final_state.current_iteration} iterations")
+        print(f"\n✅ Custom project completed after {final_state['current_iteration']} iterations")
         print_final_design(final_state)
         
         stats = get_project_statistics(final_state)
@@ -101,16 +109,16 @@ async def run_custom_project():
 
 
 if __name__ == "__main__":
-    print("UAV Design Agent Coordination System - Structured Architecture")
+    print("UAV Design Agent Coordination System - LangGraph Implementation")
     print("Features:")
     print("✅ Modular file structure with clear separation of concerns")
     print("✅ Async agent coordination with dependency checking")
-    print("✅ LLM-generated outputs in Pydantic format") 
-    print("✅ Real tool calling with domain-specific tools")
-    print("✅ Agent-decided messaging system")
+    print("✅ LangGraph create_react_agent for tool calling and structured output") 
+    print("✅ Agent-decided messaging system with mailboxes")
     print("✅ Coordinator task assignment and completion evaluation")
     print("✅ Stability-based iteration control")
     print("✅ Comprehensive logging and statistics")
+    print("✅ Context-aware agent processing with pre_model_hook")
     print("\nOptions:")
     print("1. Run example surveillance UAV project: python main.py")
     print("2. Run custom project (interactive): Uncomment run_custom_project() below")

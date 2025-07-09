@@ -1,4 +1,4 @@
-"""Workflow for the UAV design system."""
+"""Workflow for the UAV design system using LangGraph."""
 
 import asyncio
 from typing import Literal
@@ -23,10 +23,12 @@ from langgraph.graph.state import CompiledStateGraph
 
 
 async def aggregator_node(state: GlobalState) -> GlobalState:
-    """Run all agents concurrently."""
+    """Run all agents concurrently using LangGraph create_react_agent."""
+    current_iter = state.current_iteration
+    
     llm = get_llm()
     
-    # Give each agent only the tools they need
+    # Create agents with their specific tools
     agents = [
         MissionPlannerAgent(llm, MISSION_PLANNER_TOOLS),
         AerodynamicsAgent(llm, AERODYNAMICS_TOOLS),
@@ -37,6 +39,22 @@ async def aggregator_node(state: GlobalState) -> GlobalState:
     
     # Run all agents concurrently
     await asyncio.gather(*[agent.process(state) for agent in agents])
+    
+    # Print iteration summary
+    print(f"\n📊 ITERATION {current_iter} SUMMARY:")
+    agent_names = ["mission_planner", "aerodynamics", "propulsion", "structures", "manufacturing"]
+    for agent_name in agent_names:
+        outputs_dict = getattr(state, f"{agent_name}_outputs")
+        if current_iter in outputs_dict:
+            # Check if this was an update or maintain
+            if state.last_update_iteration[agent_name] == current_iter:
+                status = "✅ OUTPUT (UPDATED)"
+            else:
+                status = "✅ OUTPUT (MAINTAINED)"
+        else:
+            status = "❌ NO OUTPUT"
+        print(f"   {agent_name}: {status}")
+    
     return state
 
 
@@ -52,7 +70,6 @@ def should_continue(state: GlobalState) -> Literal["continue", "end"]:
     if state.project_complete or state.current_iteration >= state.max_iterations:
         return "end"
     return "continue"
-
 
 
 def create_uav_design_workflow() -> CompiledStateGraph:

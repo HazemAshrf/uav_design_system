@@ -1,4 +1,4 @@
-"""Propulsion Agent for UAV design system with comprehensive conversation management."""
+"""Propulsion Agent for UAV design system using LangGraph create_react_agent."""
 
 from typing import Dict, List, Any
 from langchain_openai import ChatOpenAI
@@ -16,11 +16,14 @@ class PropulsionAgent(BaseAgent):
         super().__init__("propulsion", llm, tools, PropulsionOutput, PROPULSION_SYSTEM)
     
     def check_dependencies_ready(self, state: GlobalState) -> bool:
-        """Needs MTOW from mission planner."""
-        return state.current_iteration in state.mission_planner_outputs
+        """Needs MTOW from mission planner - check if mission planner has any output."""
+        return len(state.mission_planner_outputs) > 0
     
     def get_dependency_outputs(self, state: GlobalState) -> Dict[str, Any]:
-        """Get mission planner output."""
-        return {
-            "mission_plan": state.mission_planner_outputs.get(state.current_iteration)
-        }
+        """Get latest mission planner output."""
+        if state.mission_planner_outputs:
+            latest_key = max(state.mission_planner_outputs.keys())
+            return {
+                "mission_plan": state.mission_planner_outputs[latest_key]
+            }
+        return {}
